@@ -6,6 +6,17 @@ interface Balance {
   total: number;
 }
 
+interface CreateTransactionDTO {
+  title: string;
+  value: number;
+  type: 'income' | 'outcome';
+}
+
+interface AccountStatement {
+  transactions: Transaction[];
+  balance: Balance;
+}
+
 class TransactionsRepository {
   private transactions: Transaction[];
 
@@ -13,16 +24,40 @@ class TransactionsRepository {
     this.transactions = [];
   }
 
-  public all(): Transaction[] {
-    // TODO
+  public all(): AccountStatement {
+    return { transactions: this.transactions, balance: this.getBalance() };
   }
 
   public getBalance(): Balance {
-    // TODO
+    const income = this.transactions.reduce((total, transaction) => {
+      if (transaction.type === 'income') {
+        return total + transaction.value;
+      }
+      return total;
+    }, 0);
+
+    const outcome = this.transactions.reduce((total, transaction) => {
+      if (transaction.type === 'outcome') {
+        return total + transaction.value;
+      }
+
+      return total;
+    }, 0);
+
+    return { income, outcome, total: income - outcome };
   }
 
-  public create(): Transaction {
-    // TODO
+  public create({ title, value, type }: CreateTransactionDTO): Transaction {
+    const balanceTotal = this.getBalance().total;
+
+    if (type === 'outcome') {
+      if (balanceTotal - value < 0) {
+        throw Error('The outcome value is not available');
+      }
+    }
+    const transaction = new Transaction({ title, type, value });
+    this.transactions.push(transaction);
+    return transaction;
   }
 }
 
